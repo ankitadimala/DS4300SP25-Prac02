@@ -1,12 +1,19 @@
 import redis
+import chromadb
+import faiss
 import ollama
 import numpy as np
 import json
 
 redis_client = redis.Redis(host="localhost", port=6380, db=0)
+chroma_client = chromadb.PersistentClient(path="./vector_storage")
+chroma_collection = chroma_client.get_or_create_collection("course_notes")
 INDEX_NAME = "embedding_index"
 VECTOR_DIM = 768
 DOC_PREFIX = "doc:"
+faiss_index = faiss.IndexFlatL2(VECTOR_DIM)
+faiss_vectors = []
+faiss_metadata = []
 
 def create_hnsw_index():
     try:
@@ -35,9 +42,13 @@ def store_embedding(doc_id, text, module):
             "embedding": np.array(embedding, dtype=np.float32).tobytes(),
         },
     )
+    chroma_collection.add(documents=[text], embeddings=[embedding], metadatas=[{"module": module}])
+    faiss_vectors.append(embedding)
+    faiss_metadata.append({"doc_id": doc_id, "text": text, "module": module})
 
 def process_and_store():
     with open("slides_metadata.json", "r", encoding="utf-8") as f:
         slides_data = json.load(f)
     for i, slide in enumerate(slides_data):
         store_embedding(str(i), slide["text"], slide["module"])
+    faiss_index.add(np.array(faiss_vectors, dtype=np.float32))
