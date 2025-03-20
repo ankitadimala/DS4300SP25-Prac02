@@ -1,0 +1,4 @@
+data/
+*.json
+*.db
+vector_storage/
