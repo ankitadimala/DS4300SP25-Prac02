@@ -3,7 +3,7 @@ import indexing
 
 def main():
     print("Extracting slides...")
-    preprocess.process_pdfs("data/")
+    preprocessing_test.process_pdfs("data/")
     print("Indexing slides in Redis, ChromaDB, and FAISS...")
     indexing.create_hnsw_index()
     indexing.process_and_store()
