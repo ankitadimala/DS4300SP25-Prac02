@@ -61,7 +61,25 @@ def process_data(folder_path):
 if __name__ == "__main__":
     folder_path = "data/"
     data = process_data(folder_path)
+
+    slides = []
     for filename, text in data.items():
-        print(f"\n--- Cleaned Text for {filename} ---\n{text}\n")
+        module_name = os.path.splitext(filename)[0]
+        chunks = text.split("\n\n")
+
+        for i, chunk in enumerate(chunks):
+            if chunk.strip():
+                slides.append({
+                    "slide_number": i + 1,
+                    "text": chunk.strip(),
+                    "module": module_name,
+                    "source": filename
+                })
+
+    import json
+    with open("slides_metadata.json", "w", encoding="utf-8") as f:
+        json.dump(slides, f, indent=4)
+
+    print(f"Saved {len(slides)} cleaned slides to slides_metadata.json")
 
 
