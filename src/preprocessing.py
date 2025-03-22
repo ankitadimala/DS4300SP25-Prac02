@@ -59,7 +59,7 @@ def process_data(folder_path):
 
         
 if __name__ == "__main__":
-    folder_path = "/Users/nubahaahsan/Desktop/DS4300/Practicals/practical_02_data"
+    folder_path = "data/"
     data = process_data(folder_path)
     for filename, text in data.items():
         print(f"\n--- Cleaned Text for {filename} ---\n{text}\n")
