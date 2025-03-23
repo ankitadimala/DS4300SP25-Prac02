@@ -34,6 +34,7 @@ def get_embedding(text):
 def store_embedding(doc_id, text, module):
     embedding = get_embedding(text)
     key = f"{DOC_PREFIX}{doc_id}"
+
     redis_client.hset(
         key,
         mapping={
@@ -42,7 +43,14 @@ def store_embedding(doc_id, text, module):
             "embedding": np.array(embedding, dtype=np.float32).tobytes(),
         },
     )
-    chroma_collection.add(documents=[text], embeddings=[embedding], metadatas=[{"module": module}])
+
+    chroma_collection.add(
+        ids=[doc_id],
+        documents=[text],
+        embeddings=[embedding],
+        metadatas=[{"module": module}],
+    )
+
     faiss_vectors.append(embedding)
     faiss_metadata.append({"doc_id": doc_id, "text": text, "module": module})
 
@@ -52,3 +60,5 @@ def process_and_store():
     for i, slide in enumerate(slides_data):
         store_embedding(str(i), slide["text"], slide["module"])
     faiss_index.add(np.array(faiss_vectors, dtype=np.float32))
+
+
