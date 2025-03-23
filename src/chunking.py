@@ -24,9 +24,6 @@ def chunk_by_tokens(text, chunk_size, overlap):
 
     # step size = number of new tokens in each chunk 
     step = chunk_size - overlap
-    if step <= 0: 
-        raise ValueError("Overlap must be smaller than chunk size.")
-    
     # creating chunks
     for i in range(0, len(tokens), step):
         # extracting a slice of tokens for the current chunk 
