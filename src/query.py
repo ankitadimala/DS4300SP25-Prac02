@@ -72,4 +72,4 @@ def query_llm(question, source="redis", model="mistral"):
         {"role": "user", "content": f"{question}\n\nContext:\n{context}"}
     ]
     response = ollama.chat(model=model, messages=messages)
-    return response["message"]
+    return response["message"]["content"]
