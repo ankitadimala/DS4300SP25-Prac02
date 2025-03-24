@@ -32,7 +32,7 @@ def main():
     indexing.create_hnsw_index()
     indexing.process_and_store()
     
-    print("Indexing complete. Ready for querying!")
+    print("Indexing complete. Ready for querying.")
 
     end_time = time.time()
     print(f"\n Pipeline completed in {end_time - start_time:.2f} seconds.")

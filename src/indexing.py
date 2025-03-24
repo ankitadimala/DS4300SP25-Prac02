@@ -60,5 +60,3 @@ def process_and_store():
     for i, slide in enumerate(slides_data):
         store_embedding(str(i), slide["text"], slide["module"])
     faiss_index.add(np.array(faiss_vectors, dtype=np.float32))
-
-

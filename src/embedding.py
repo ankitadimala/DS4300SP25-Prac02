@@ -1,5 +1,4 @@
-"""
-"""
+'''
 
 import os
 os.environ["TRANSFORMERS_NO_FLEX_ATTENTION"] = "1"
@@ -45,3 +44,4 @@ if __name__ == "__main__":
     print("Embedding from all-MiniLM-L6-v2:", emb1[:5])
     print("Embedding from all-mpnet-base-v2:", emb2[:5])
     print("Embedding from InstructorXL (placeholder):", emb3[:5])
+'''
