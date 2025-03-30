@@ -49,6 +49,7 @@ def process_folder(folder_path, chunk_size=200, overlap=50, output_json="slides_
     return {chunk["source"]: chunk["text"] for chunk in all_chunks}  # to support .items() in main
 
 if __name__ == "__main__":
-    folder_path = "data/"
+    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    folder_path = os.path.join(PROJECT_ROOT, "data")
     raw_data = process_folder(folder_path)
     print(f"Saved {len(raw_data)} chunks to slides_metadata.json")

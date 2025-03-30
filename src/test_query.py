@@ -1,13 +1,14 @@
 from query import query_llm
 import time
 
-question = "When was Redis originally released?"
+question = "What does the A stand for in ACID properties?"
 
 # Choose one of: "redis", "chroma", "faiss"
-source = "faiss"
+source = "chroma"
 
-# Choose one of your downloaded Ollama models
-model = "tinyllama"
+# Choose one of your downloaded Ollama models: mistral, llama2, tinyllama, 
+# gemma:2b, phi, dolphin-mixtral
+model = "mistral"
 
 print(f"\nQuestion: {question}")
 print(f"Using vector DB: {source}")
