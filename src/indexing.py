@@ -1,3 +1,4 @@
+import os
 import json
 import redis
 import numpy as np
@@ -16,16 +17,28 @@ faiss_vectors = []
 faiss_metadata = []
 
 def create_chroma_collection(dimension, name="course_notes"):
+    # Always delete the existing collection, no matter what
     try:
         chroma_client.delete_collection(name)
-    except:
+    except Exception:
         pass
-    return chroma_client.create_collection(
-        name=name,
-        metadata={"hnsw:space": "cosine"},
-        embedding_function=None,
-        dimension=dimension
-    )
+
+    try:
+        return chroma_client.create_collection(
+            name=name,
+            metadata={"hnsw:space": "cosine"},
+            embedding_function=None,
+            dimension=dimension
+        )
+    except TypeError:
+        print(f"Chroma doesn't support `dimension=` in this version. Falling back without it.")
+        # WARNING: Collection will default to last-used dimension — so we MUST delete first!
+        return chroma_client.create_collection(
+            name=name,
+            metadata={"hnsw:space": "cosine"},
+            embedding_function=None
+        )
+
 
 def create_hnsw_index():
     try:
@@ -46,11 +59,12 @@ def create_hnsw_index():
 
 def reset_faiss_index(new_dim):
     global faiss_index, faiss_metadata
+    print(f"Resetting FAISS index to dimension: {new_dim}")
     faiss_index = faiss.IndexFlatL2(new_dim)
     faiss_metadata = []
 
 
-def load_and_store_embeddings(filepath, vector_db="faiss"):
+def load_and_store_embeddings(filepath, vector_db="faiss", collection_name=None):
     print(f"Loading embeddings from: {filepath}")
     with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -63,9 +77,10 @@ def load_and_store_embeddings(filepath, vector_db="faiss"):
 
     elif vector_db == "chroma":
         embedding_dim = len(data[0]["embedding"])
-        collection_name = f"course_notes_{embedding_dim}"  # optional: make it unique
-        chroma_collection = create_chroma_collection(embedding_dim, name=collection_name)
+        collection = collection_name or "course_notes"
 
+        print(f"Creating Chroma collection: {collection} with dim={embedding_dim}")
+        chroma_collection = create_chroma_collection(embedding_dim, name=collection)
 
     elif vector_db == "redis":
         redis_client.flushdb()

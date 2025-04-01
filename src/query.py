@@ -60,9 +60,10 @@ def query_vector_db(
     elif vector_db == "chroma":
         chroma_client = chromadb.PersistentClient(path="./vector_storage")
 
-        # Load collection based on embed dimension
-        embed_dim = len(query_vec)
-        collection_name = f"course_notes_{embed_dim}"
+        # Determine collection name based on embedding model, chunk, and overlap
+        collection_name = f"{embed_model.replace('/', '_')}__chunk{chunk_size}_overlap{overlap}"
+        print(f"Querying Chroma collection: {collection_name}")
+
         chroma_collection = chroma_client.get_or_create_collection(collection_name)
 
         query_results = chroma_collection.query(
@@ -105,7 +106,9 @@ def query_vector_db(
         raise ValueError(f"Unsupported vector DB: {vector_db}")
 
 
-def query_llm(question, source="faiss", model="mistral", top_k=5, embed_model="all-MiniLM-L6-v2", chunk_size=200, overlap=0):
+def query_llm(question, source="redis", model="mistral", top_k=5, 
+              embed_model="all-MiniLM-L6-v2", chunk_size=200, overlap=0,
+              system_prompt="You are a helpful assistant. Use the provided course material to answer the question."):
     contexts = query_vector_db(
         question=question,
         embed_model=embed_model,
@@ -120,7 +123,7 @@ def query_llm(question, source="faiss", model="mistral", top_k=5, embed_model="a
 
     # Build messages for the chat model
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. Use the provided course material to answer the question."},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"{question}\n\nCourse Material:\n{context}"}
     ]
 
