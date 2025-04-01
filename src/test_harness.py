@@ -4,6 +4,7 @@ import csv
 import os
 import subprocess
 import re
+import psutil
 from datetime import datetime
 from itertools import product
 
@@ -34,7 +35,11 @@ def log_result(row: dict):
         writer = csv.DictWriter(f, fieldnames=row.keys())
         writer.writerow(row)
 
-    print(f"Logged experiment to CSV.")
+    print("Logged experiment to CSV.")
+
+# Store previous time and memory for reuse
+last_time = None
+last_memory = None
 
 def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_model, question, 
                    system_prompt="default", embed_index_time=None, embed_index_memory=None):
@@ -47,16 +52,12 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
         "vector_db": vector_db,
         "llm_model": llm_model,
         "question": question,
-        "system_prompt": system_prompt
+        "system_prompt": system_prompt,
+        "embedding_and_index_time_sec": round(embed_index_time, 2) if embed_index_time else "",
+        "embedding_and_index_memory_mb": round(embed_index_memory, 2) if embed_index_memory else ""
     }
 
-    if embed_index_time is not None:
-        row["embedding_and_index_time_sec"] = round(embed_index_time, 2)
-    if embed_index_memory is not None:
-        row["embedding_and_index_memory_mb"] = round(embed_index_memory, 2)
-
     # === Query Timing & Memory ===
-    tracemalloc.start()
     start = time.time()
     result = subprocess.run([
         "python", os.path.join(PROJECT_ROOT, "src", "test_query.py"),
@@ -69,37 +70,42 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
         "--system_prompt", system_prompt
     ], capture_output=True, text=True)
     query_time = time.time() - start
-    current, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
-
     row["query_time_sec"] = round(query_time, 2)
-    row["query_memory_mb"] = round(peak / 1024 / 1024, 2)
     row["total_runtime_sec"] = round(query_time + (embed_index_time or 0), 2)
 
-    # Extract LLM response
     output = result.stdout.strip()
+
+    # Parse <QUERY_MEMORY_MB>
+    mem_match = re.search(r"<QUERY_MEMORY_MB>(.*?)</QUERY_MEMORY_MB>", output)
+    if mem_match:
+        try:
+            row["query_memory_mb"] = round(float(mem_match.group(1)), 2)
+        except:
+            row["query_memory_mb"] = ""
+    else:
+        row["query_memory_mb"] = ""
+
+    # Parse <LLM_RESPONSE>
     match = re.search(r"<LLM_RESPONSE>(.*?)</LLM_RESPONSE>", output, re.DOTALL)
     if match:
         response_text = match.group(1).strip()
     else:
         response_text = "(No response)"
-    row["llm_response_summary"] = response_text[:100].replace("\n", " ")  # small summary in CSV
+    row["llm_response_summary"] = response_text[:100].replace("\n", " ")
 
-    # Save full response to file
+    # Save full response to shared file
     with open(LLM_OUTPUT_FILE, "a", encoding="utf-8") as f:
         f.write(f"--- Experiment {exp_id} ---\n")
         f.write(f"Model: {embed_model} | Chunk: {chunk_size} | Overlap: {overlap} | DB: {vector_db} | LLM: {llm_model}\n")
         f.write(f"Prompt: {system_prompt}\n")
         f.write(f"Question: {question}\n")
         f.write("LLM Response:\n")
-        f.write(response_text.strip() + "\n\n")
+        f.write(response_text + "\n\n")
 
     log_result(row)
 
 
 # === Experiment Grid Configuration ===
-#                                                      ***** ONLY EDIT HERE TO MODIFY THE EXPERIMENT *****
-
 embed_models = ["all-MiniLM-L6-v2", "all-mpnet-base-v2", "intfloat/e5-base-v2"]
 chunk_sizes = [200, 500, 1000]
 overlaps = [0, 50, 100]
@@ -128,30 +134,40 @@ for i, (embed_model, chunk_size, overlap, vector_db, llm_model, question, system
         "vector_db": vector_db
     }
 
-    embed_index_time = None
-    embed_index_memory = None
-
     if current_config != last_embedding_config:
         print("Regenerating embeddings + indexing...")
-        tracemalloc.start()
-        start_time = time.time()
 
-        subprocess.run([
+        start_time = time.time()
+        proc = subprocess.Popen([
             "python", os.path.join(PROJECT_ROOT, "src", "load_dbs.py"),
             "--model", embed_model,
             "--chunk_size", str(chunk_size),
             "--overlap", str(overlap),
             "--vector_db", vector_db
-        ])
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+        try:
+            p = psutil.Process(proc.pid)
+            peak_mem = 0
+            while proc.poll() is None:
+                mem = p.memory_info().rss / 1024 / 1024
+                peak_mem = max(peak_mem, mem)
+                time.sleep(0.1)
+        except Exception as e:
+            print(f"Could not capture accurate memory: {e}")
+            peak_mem = None
+
+        proc.communicate()
         embed_index_time = time.time() - start_time
-        current, peak = tracemalloc.get_traced_memory()
-        embed_index_memory = peak / 1024 / 1024
-        tracemalloc.stop()
+        embed_index_memory = peak_mem
 
         last_embedding_config = current_config.copy()
+        last_time = embed_index_time
+        last_memory = embed_index_memory
     else:
         print("Reusing existing embeddings and DB index")
+        embed_index_time = last_time
+        embed_index_memory = last_memory
 
     run_experiment(
         i, embed_model, chunk_size, overlap, vector_db, llm_model,

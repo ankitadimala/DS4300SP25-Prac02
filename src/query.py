@@ -128,6 +128,9 @@ def query_llm(question, source="redis", model="mistral", top_k=5,
     ]
 
     # Call the local LLM
-    response = ollama.chat(model=model, messages=messages)
+    response = ollama.chat(model=model, 
+                            messages=messages,
+                            options={"num_predict": 256, "num_threads": 14}
+                            )
 
     return response["message"]["content"]

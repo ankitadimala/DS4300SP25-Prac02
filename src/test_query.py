@@ -3,6 +3,7 @@ import json
 import os
 import time
 import sys
+import tracemalloc
 from query import query_llm
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -45,7 +46,9 @@ if __name__ == "__main__":
     print(f"System prompt: {args.system_prompt}\n")
 
     print("Asking LLM...")
+    tracemalloc.start()
     start_time = time.time()
+
     response = query_llm(
         question=args.question,
         source=args.source,
@@ -55,11 +58,15 @@ if __name__ == "__main__":
         chunk_size=args.chunk_size or default_chunk_size,
         overlap=args.overlap or default_overlap
     )
+
     end_time = time.time()
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
 
     print("\nGot response!")
     print("<LLM_RESPONSE>")
     print(response)
     print("</LLM_RESPONSE>")
+    print(f"<QUERY_MEMORY_MB>{peak / 1024 / 1024:.2f}</QUERY_MEMORY_MB>")
     print(f"\nQuery completed in {end_time - start_time:.2f} seconds.")
     sys.stdout.flush()
