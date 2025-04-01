@@ -94,7 +94,10 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
 
     log_result(row)
 
+
 # === Experiment Grid Configuration ===
+#                                                      ***** ONLY EDIT HERE TO MODIFY THE EXPERIMENT *****
+
 embed_models = ["all-MiniLM-L6-v2", "all-mpnet-base-v2", "intfloat/e5-base-v2"]
 chunk_sizes = [200, 500, 1000]
 overlaps = [0, 50, 100]
