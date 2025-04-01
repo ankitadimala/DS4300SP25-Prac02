@@ -1,6 +1,5 @@
 import time
 import tracemalloc
-import psutil
 import csv
 import os
 import subprocess
@@ -13,6 +12,7 @@ LOG_DIR = os.path.join(PROJECT_ROOT, "experiment_logs")
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "llm_outputs")
 CONFIG_FILE = os.path.join(PROJECT_ROOT, "last_indexed_config.json")
 LOG_FILE = None
+LLM_OUTPUT_FILE = os.path.join(OUTPUT_DIR, f"llm_outputs_grid_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
@@ -86,11 +86,13 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
     row["llm_response_summary"] = response_text[:100].replace("\n", " ")  # small summary in CSV
 
     # Save full response to file
-    safe_model = llm_model.replace("/", "_")
-    filename = f"exp_{exp_id:03d}_{safe_model}_{vector_db}_chunk{chunk_size}_overlap{overlap}.txt"
-    output_path = os.path.join(OUTPUT_DIR, filename)
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(response_text)
+    with open(LLM_OUTPUT_FILE, "a", encoding="utf-8") as f:
+        f.write(f"--- Experiment {exp_id} ---\n")
+        f.write(f"Model: {embed_model} | Chunk: {chunk_size} | Overlap: {overlap} | DB: {vector_db} | LLM: {llm_model}\n")
+        f.write(f"Prompt: {system_prompt}\n")
+        f.write(f"Question: {question}\n")
+        f.write("LLM Response:\n")
+        f.write(response_text.strip() + "\n\n")
 
     log_result(row)
 
