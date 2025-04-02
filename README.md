@@ -78,7 +78,9 @@ Manually load the databases, generate embeddings from the preprocessed text, and
 - model = all-MiniLM-L6-v2
 - vector_db = Redis 
 
-    python src/load_dbs.py
+```bash
+python src/load_dbs.py 
+```
 
 
 **Custom Parameters**
