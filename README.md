@@ -106,15 +106,15 @@ Example:
 
 ### Querying the System 
 
-Test the retrieval and LLM response with a manual query using test_query.py: 
-
-    python src/test_query.py
+Test the retrieval and LLM response with a manual query using test_query.py.
 
 **Default Usage**
 
 - question: "What are ACID properties?
 - llm_model: mistral 
 - system prompt: "You are a helpful assistant. Use the provided course material to answer the question."
+
+    python src/test_query.py
 
 
 **Custom Parameters**
