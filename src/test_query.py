@@ -10,7 +10,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 CONFIG_FILE = os.path.join(PROJECT_ROOT, "last_indexed_config.json")
 
 if __name__ == "__main__":
-    # Try to read defaults from config file
+    # try to read defaults from config file
     default_model = "all-MiniLM-L6-v2"
     default_chunk_size = 200
     default_overlap = 50
@@ -29,6 +29,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Failed to read config file: {e}")
 
+    # define CLI arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--question", default="What are ACID properties in databases?")
     parser.add_argument("--source", default=default_source)
@@ -49,6 +50,7 @@ if __name__ == "__main__":
     tracemalloc.start()
     start_time = time.time()
 
+    # query llm
     response = query_llm(
         question=args.question,
         source=args.source,
@@ -63,10 +65,13 @@ if __name__ == "__main__":
     current, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
 
+    #display response
     print("\nGot response!")
     print("<LLM_RESPONSE>")
     print(response)
     print("</LLM_RESPONSE>")
     print(f"<QUERY_MEMORY_MB>{peak / 1024 / 1024:.2f}</QUERY_MEMORY_MB>")
     print(f"\nQuery completed in {end_time - start_time:.2f} seconds.")
+    
+    # flush output
     sys.stdout.flush()

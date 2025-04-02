@@ -4,13 +4,13 @@ import json
 import argparse
 import indexing
 
-# --- Path setup ---
+# path setup
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 EMBEDDING_SCRIPT = os.path.join(PROJECT_ROOT, "src", "embedding.py")
 EMBEDDING_RESULTS_DIR = os.path.join(PROJECT_ROOT, "embedding_results")
 CONFIG_FILE = os.path.join(PROJECT_ROOT, "last_indexed_config.json")
 
-# --- CLI args ---
+# define CLI arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", default="all-MiniLM-L6-v2")
 parser.add_argument("--chunk_size", type=int, default=200)
@@ -24,6 +24,7 @@ embedding_output_file = os.path.join(
 )
 
 def main():
+    # preprocess data and generate embeddings
     print("Preprocessing PDFs and generating embeddings...")
     subprocess.run([
         "python", EMBEDDING_SCRIPT,
@@ -32,11 +33,12 @@ def main():
         "--overlap", str(args.overlap)
     ], check=True)
 
+    # index into appropriate db
     print("Indexing into vector databases...")
     indexing.create_hnsw_index()
     indexing.load_and_store_embeddings(embedding_output_file, vector_db=args.vector_db)
 
-    # Write metadata for future query use
+    # write metadata for future query use
     config = {
         "model": args.model,
         "chunk_size": args.chunk_size,

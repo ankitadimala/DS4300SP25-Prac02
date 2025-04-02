@@ -3,21 +3,21 @@ import json
 import numpy as np
 import ollama
 from embedding import get_model, get_embedding
-from indexing import redis_client, INDEX_NAME, DOC_PREFIX
+from indexing import redis_client, INDEX_NAME
 from redis.commands.search.query import Query
 import faiss
 import chromadb
 
-# Optional: for redis ft queries
-import redis.commands.search.aggregation as aggregations
 
-# For FAISS metadata tracking
+# for FAISS metadata tracking
 faiss_metadata = []
 
+# reset faiss index
 def reset_faiss_index(dimension):
     global faiss_index, faiss_metadata
     faiss_index = faiss.IndexFlatL2(dimension)
     faiss_metadata = []
+
 
 def query_vector_db(
     question,
@@ -31,7 +31,7 @@ def query_vector_db(
     model = get_model(embed_model)
     query_vec = get_embedding(question, model, embed_model)
 
-    # === FAISS retrieval ===
+    # faiss retrieval
     if vector_db == "faiss":
         # Load relevant embedding file
         PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -44,7 +44,7 @@ def query_vector_db(
         with open(embedding_file, "r", encoding="utf-8") as f:
             entries = json.load(f)
 
-        # Reset and rebuild FAISS index
+        # reset and rebuild FAISS index
         reset_faiss_index(len(entries[0]["embedding"]))
 
         for entry in entries:
@@ -56,7 +56,7 @@ def query_vector_db(
         results = [faiss_metadata[i] for i in I[0]]
         return results
 
-    # === Chroma retrieval ===
+    # chroma retrieval
     elif vector_db == "chroma":
         chroma_client = chromadb.PersistentClient(path="./vector_storage")
 
@@ -81,7 +81,7 @@ def query_vector_db(
         return results
 
 
-    # === Redis retrieval ===
+    # redis retrieval
     elif vector_db == "redis":
         redis_query = (
             Query(f"*=>[KNN {top_k} @embedding $vec AS score]")
@@ -105,7 +105,7 @@ def query_vector_db(
     else:
         raise ValueError(f"Unsupported vector DB: {vector_db}")
 
-
+# query appropriate llm with appropriate question
 def query_llm(question, source="redis", model="mistral", top_k=5, 
               embed_model="all-MiniLM-L6-v2", chunk_size=200, overlap=0,
               system_prompt="You are a helpful assistant. Use the provided course material to answer the question."):
@@ -118,16 +118,16 @@ def query_llm(question, source="redis", model="mistral", top_k=5,
         top_k=top_k
     )
 
-    # Assemble context for the prompt
+    # assemble context for the prompt
     context = "\n\n".join([chunk["text"] for chunk in contexts])
 
-    # Build messages for the chat model
+    # build messages for the chat model
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"{question}\n\nCourse Material:\n{context}"}
     ]
 
-    # Call the local LLM
+    # call the local LLM
     response = ollama.chat(model=model, 
                             messages=messages,
                             options={"num_predict": 256, "num_threads": 14}

@@ -1,0 +1,25 @@
+# core
+numpy
+pandas
+tqdm
+
+# PDF preprocessing
+PyMuPDF==1.22.3  # fitz
+nltk
+
+# embeddings
+sentence-transformers
+
+# vector DBs
+redis
+chromadb
+faiss-cpu
+
+# LLM + Ollama interface
+requests
+
+# monitoring memory / performance
+psutil
+
+# optional: safer subprocess management
+python-dotenv

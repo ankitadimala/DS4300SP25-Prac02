@@ -1,5 +1,4 @@
 import time
-import tracemalloc
 import csv
 import os
 import subprocess
@@ -18,6 +17,7 @@ LLM_OUTPUT_FILE = os.path.join(OUTPUT_DIR, f"llm_outputs_grid_{datetime.now().st
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
+# log data from an experiment into log file
 def log_result(row: dict):
     global LOG_FILE
 
@@ -37,10 +37,11 @@ def log_result(row: dict):
 
     print("Logged experiment to CSV.")
 
-# Store previous time and memory for reuse
+# store previous time and memory for reuse
 last_time = None
 last_memory = None
 
+# run grid test for all variable input combinations
 def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_model, question, 
                    system_prompt="default", embed_index_time=None, embed_index_memory=None):
     print(f"\n▶ Running: {embed_model} | chunk={chunk_size} | overlap={overlap} | db={vector_db} | llm={llm_model}")
@@ -57,7 +58,7 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
         "embedding_and_index_memory_mb": round(embed_index_memory, 2) if embed_index_memory else ""
     }
 
-    # === Query Timing & Memory ===
+    # query timing and memory
     start = time.time()
     result = subprocess.run([
         "python", os.path.join(PROJECT_ROOT, "src", "test_query.py"),
@@ -71,11 +72,10 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
     ], capture_output=True, text=True)
     query_time = time.time() - start
     row["query_time_sec"] = round(query_time, 2)
-    row["total_runtime_sec"] = round(query_time + (embed_index_time or 0), 2)
 
     output = result.stdout.strip()
 
-    # Parse <QUERY_MEMORY_MB>
+    # parse <QUERY_MEMORY_MB>
     mem_match = re.search(r"<QUERY_MEMORY_MB>(.*?)</QUERY_MEMORY_MB>", output)
     if mem_match:
         try:
@@ -85,7 +85,10 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
     else:
         row["query_memory_mb"] = ""
 
-    # Parse <LLM_RESPONSE>
+    # total runtime
+    row["total_runtime_sec"] = round(query_time + (embed_index_time or 0), 2)
+
+    # parse <LLM_RESPONSE>
     match = re.search(r"<LLM_RESPONSE>(.*?)</LLM_RESPONSE>", output, re.DOTALL)
     if match:
         response_text = match.group(1).strip()
@@ -93,7 +96,7 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
         response_text = "(No response)"
     row["llm_response_summary"] = response_text[:100].replace("\n", " ")
 
-    # Save full response to shared file
+    # save full response to shared file
     with open(LLM_OUTPUT_FILE, "a", encoding="utf-8") as f:
         f.write(f"--- Experiment {exp_id} ---\n")
         f.write(f"Model: {embed_model} | Chunk: {chunk_size} | Overlap: {overlap} | DB: {vector_db} | LLM: {llm_model}\n")
@@ -105,7 +108,7 @@ def run_experiment(exp_id, embed_model, chunk_size, overlap, vector_db, llm_mode
     log_result(row)
 
 
-# === Experiment Grid Configuration ===
+# EXPERIMENT GRID CONFIGURATION
 embed_models = ["all-MiniLM-L6-v2", "all-mpnet-base-v2", "intfloat/e5-base-v2"]
 chunk_sizes = [200, 500, 1000]
 overlaps = [0, 50, 100]
@@ -119,7 +122,7 @@ system_prompts = [
     "You are a database expert tutor. Answer clearly and concisely using the course materials."
 ]
 
-# === Main Loop ===
+# MAIN LOOP
 last_embedding_config = {}
 experiments = list(product(embed_models, chunk_sizes, overlaps, vector_dbs, llm_models, questions, system_prompts))
 total_experiments = len(experiments)
@@ -127,6 +130,7 @@ total_experiments = len(experiments)
 for i, (embed_model, chunk_size, overlap, vector_db, llm_model, question, system_prompt) in enumerate(experiments, start=1):
     print(f"\nExperiment {i}/{total_experiments}")
 
+    # set current data configuration
     current_config = {
         "embed_model": embed_model,
         "chunk_size": chunk_size,
@@ -134,6 +138,7 @@ for i, (embed_model, chunk_size, overlap, vector_db, llm_model, question, system
         "vector_db": vector_db
     }
 
+    # regen data for configuration different from previous
     if current_config != last_embedding_config:
         print("Regenerating embeddings + indexing...")
 
@@ -165,10 +170,12 @@ for i, (embed_model, chunk_size, overlap, vector_db, llm_model, question, system
         last_time = embed_index_time
         last_memory = embed_index_memory
     else:
+        # resuse previous data configuration if same
         print("Reusing existing embeddings and DB index")
         embed_index_time = last_time
         embed_index_memory = last_memory
 
+    # run experiment
     run_experiment(
         i, embed_model, chunk_size, overlap, vector_db, llm_model,
         question, system_prompt,

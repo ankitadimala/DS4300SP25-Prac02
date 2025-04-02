@@ -6,19 +6,9 @@ import nltk
 from nltk.tokenize import word_tokenize
 nltk.download('punkt_tab')
 
+# split text into chunks based on a token count with a specified overlap
 def chunk_by_tokens(text, chunk_size, overlap):
-    """
-    Splits text into chunks based on a token count with a specified overlap. 
-    
-    Parameters: 
-        text (str): The cleaned input text to be chunked.
-        chunk_size (int): # of tokens per chunk (e.g., 200, 500, 1000). 
-        overlap (int): # of tokens that should overlap between consecutive chunks (e.g., 0, 50, 100).
-    
-    Returns:
-        List[str]: A list of text chunks.   
-    """
-    # tokenizing the text using NLTK's work_tokenize 
+    # tokenizing the text using NLTK work_tokenize 
     tokens = word_tokenize(text)
     chunks = []
 
@@ -38,18 +28,18 @@ def chunk_by_tokens(text, chunk_size, overlap):
     return chunks 
 
 if __name__ == "__main__":
-    # Example text for demonstration purposes
+    # example text for demonstration purposes
     sample_text = (
         "This is an example text to demonstrate token-based chunking. "
         "It will be split into chunks of a specified size with a given overlap. "
         "The quick brown fox jumps over the lazy dog. " * 50  # repeat to increase length
     )
     
-    # Define chunk parameters
+    # define chunk parameters
     chunk_size = 200   # number of tokens per chunk
     overlap = 50       # number of tokens overlapping between chunks
     
-    # Get chunks
+    # get chunks
     chunks = chunk_by_tokens(sample_text, chunk_size, overlap)
     
     print(f"Total chunks created: {len(chunks)}")

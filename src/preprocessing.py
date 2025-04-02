@@ -4,6 +4,7 @@ import os
 import json
 from chunking import chunk_by_tokens
 
+# generate text from pdfs with PyMuPDF
 def get_pdf_text(file_path):
     pdf = fitz.open(file_path)
     text = ""
@@ -12,6 +13,7 @@ def get_pdf_text(file_path):
         text += page_text + "\n"
     return text
 
+# clean text
 def clean_text(text):
     text = re.sub(r'\n+', '\n', text).strip()
     text = re.sub(r'^\d+\s*$', '', text, flags=re.MULTILINE)
@@ -22,11 +24,13 @@ def clean_text(text):
     text = re.sub(r'^[\?]+\s*$', '', text, flags=re.MULTILINE)
     return text
 
+# generate and clean text from pdfs
 def process_pdf(file_path):
     raw_text = get_pdf_text(file_path)
     cleaned_text = clean_text(raw_text)
     return cleaned_text
 
+# generate, clean, and chunk text from pdfs appropriately
 def process_folder(folder_path, chunk_size=200, overlap=50, output_json="slides_metadata.json"):
     all_chunks = []
     for filename in os.listdir(folder_path):

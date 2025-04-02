@@ -16,8 +16,8 @@ faiss_index = faiss.IndexFlatL2(VECTOR_DIM)
 faiss_vectors = []
 faiss_metadata = []
 
+# create chroma collection based on appropriate dimension
 def create_chroma_collection(dimension, name="course_notes"):
-    # Always delete the existing collection, no matter what
     try:
         chroma_client.delete_collection(name)
     except Exception:
@@ -31,15 +31,15 @@ def create_chroma_collection(dimension, name="course_notes"):
             dimension=dimension
         )
     except TypeError:
+        # fallback for chrom versions that do not support dimension argument
         print(f"Chroma doesn't support `dimension=` in this version. Falling back without it.")
-        # WARNING: Collection will default to last-used dimension — so we MUST delete first!
         return chroma_client.create_collection(
             name=name,
             metadata={"hnsw:space": "cosine"},
             embedding_function=None
         )
 
-
+# index redis
 def create_hnsw_index():
     try:
         redis_client.execute_command(f"FT.DROPINDEX {INDEX_NAME} DD")
@@ -57,13 +57,14 @@ def create_hnsw_index():
         """
     )
 
+# index faiss
 def reset_faiss_index(new_dim):
     global faiss_index, faiss_metadata
     print(f"Resetting FAISS index to dimension: {new_dim}")
     faiss_index = faiss.IndexFlatL2(new_dim)
     faiss_metadata = []
 
-
+# load appropriate db with embeddings
 def load_and_store_embeddings(filepath, vector_db="faiss", collection_name=None):
     print(f"Loading embeddings from: {filepath}")
     with open(filepath, "r", encoding="utf-8") as f:
