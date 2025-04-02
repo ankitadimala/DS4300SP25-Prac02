@@ -1,13 +1,16 @@
 # DS4300SP25-Prac02: Local Retrieval-Augmented Generation System 
+---
 
 ## Overview 
+
 This project implements a local Retrieval-Augmented Generation (RAG) system for querying course notes collected throughout the semester. The system ingests PDF documents, cleans and chunks the text, generated embeddings using multiple models, indexes these embeddings into vector databases (Redis with RediSearch, Chroma, and FAISS), and finally retrieves context for a user query to generate a response via a locally running LLM (using Ollama).
 
 The system is designed to be highly modular, supporting configurable chunking strategies, multiple embedding models, vector databases, and different loccal LLMs. The goal is to analyze the performance and output quality across various configurations. 
 
 ---
 
-## Directory Structure 
+## Directory Structure
+
 DS4300SP25-Prac02/
 ├── data/                         # Raw course notes (PDFs)
 ├── embedding_results/            # JSON files with generated embeddings
@@ -28,6 +31,7 @@ DS4300SP25-Prac02/
 ---
 
 ## Requirements 
+
 This project requires **Python 3.8+** and the following packages: 
 
 - [PyMuPDF](https://pymupdf.readthedocs.io/)
@@ -55,7 +59,9 @@ If you do not already have Redis with RediSearch installed locally, you can run 
 docker pull redis/redis-stack:latest
 docker run --name redis-stack -p 6379:6379 -d redis/redis-stack:latest
 
+
 ### Embedding and Indexing 
+
 Manually load the databases, generate embeddings from the preprocessed text, and load them into a vector database. 
 
 **Default Usage**
@@ -72,28 +78,32 @@ Example:
 
     python src/load_dbs.py --chunk_size 500 --overlap 50 --model "all-MiniLM-L6-v2" --vector_db "redis"
 
+
 ### Querying the System 
 
-to manually query an llm:
+Test the retrieval and LLM response with a manual query using test_query.py: 
 
     python src/test_query.py
 
-to make specifications about the question, model and system prompt:
+**Default Usage**
+question: "What are ACID properties?
+llm_model: mistral 
+system prompt: "You are a helpful assistant. Use the provided course material to answer the question."
+
+**Custom Parameters**
+To make specifications about the question, model and system prompt:
 
     python src/test_query.py --question ["lorem ipsum"] --llm_model ["lorem ipsum"] -- system prompt ["lorem ipsum"]
 
-ex:
+Example: 
 
     python src/test_query.py --question ["What is the CAP principle?"] --llm_model ["mistral"] -- system prompt ["You are a database tutor. Answer the queries with information only from the course slides."]
 
-without any arguments, it will default to asking about the ACID properties to mistral with the prompt: "You are a helpful assistant. Use the provided course material to answer the question."
 
----
+### Running Grid Experiments 
 
-to run grid tests:
+To systematically test multiple configurations (varying embedding models, chunk sizes and overlaps, vector DBs, LLMs, and system prompts), run the grid experiment driver: 
 
     python src/test_harness.py
 
-be warned, it takes a looong time to complete
-
-test results are written to experiment logs and llm_outputs
+**Note:** Grid experiments may take a long time to complete. Results are logged in experiment_logs/ and full LLM responses are saved in llm_outputs/
