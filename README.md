@@ -114,7 +114,9 @@ Test the retrieval and LLM response with a manual query using test_query.py.
 - llm_model: mistral 
 - system prompt: "You are a helpful assistant. Use the provided course material to answer the question."
 
-    python src/test_query.py
+```bash
+python src/test_query.py 
+```
 
 
 **Custom Parameters**
