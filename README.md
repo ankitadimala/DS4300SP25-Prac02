@@ -19,15 +19,18 @@ DS4300SP25-Prac02/ ├── data/ # Raw course notes (PDFs) ├── embedding
 
 This project requires **Python 3.8+** and the following packages: 
 
-- [PyMuPDF](https://pymupdf.readthedocs.io/)
-- [NLTK](https://www.nltk.org/)
-- [Sentence Transformers](https://www.sbert.net/)
 - [NumPy](https://numpy.org/)
-- [Redis](https://redis.io/) (with [RediSearch](https://oss.redislabs.com/redisearch/); use Redis Stack)
-- [ChromaDB](https://www.trychroma.com/)
+- [Pandas](https://pandas.pydata.org/)
+- [tqdm](https://tqdm.github.io/)
+- [PyMuPDF](https://pymupdf.readthedocs.io/) (version 1.22.3): A library for reading and writing PDF files.
+- [NLTK](https://www.nltk.org/)
+- [Sentence Transformers](https://sbert.net/)
+- [Redis](https://redis.io/)
+- [ChromaDB](https://www.trychroma.com/): An AI-native open-source vector database.
 - [FAISS](https://github.com/facebookresearch/faiss) (CPU version recommended: `faiss-cpu`)
-- [Ollama](https://ollama.com/) (for local LLM inference)
+- [Requests](https://docs.python-requests.org/)
 - [psutil](https://pypi.org/project/psutil/)
+- [python-dotenv](https://pypi.org/project/python-dotenv/) (optional): safer subprocess management
 
 A sample `requirements.txt` is provided. Install dependencies with: 
 
@@ -96,6 +99,7 @@ Example:
 
     python src/test_query.py --question ["What is the CAP principle?"] --llm_model ["mistral"] -- system prompt ["You are a database tutor. Answer the queries with information only from the course slides."]
 
+---
 
 ### Running Grid Experiments 
 
