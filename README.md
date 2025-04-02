@@ -1,4 +1,4 @@
-# DS4300SP25-Prac02: Local Retrieval-Augmented Generation System 
+# DS4300 Practial 02: Local Retrieval-Augmented Generation System 
 ---
 
 ## Overview 
@@ -11,8 +11,24 @@ The system is designed to be highly modular, supporting configurable chunking st
 
 ## Directory Structure
 
-DS4300SP25-Prac02/ ├── data/ # Raw course notes (PDFs) ├── embedding_results/ # JSON files with generated embeddings ├── experiment_logs/ # CSV logs from grid experiments ├── llm_outputs/ # Full LLM responses from grid experiments ├── src/ │ ├── chunking.py # Token-based text chunking of text │ ├── embedding.py # Embedding pipeline & model loader │ ├── indexing.py # Indexing embeddings into Redis, Chroma, FAISS │ ├── load_dbs.py # Driver script: runs the embedding and indexing pipelines │ ├── preprocessing.py # PDF extraction, cleaning, and chunking │ ├── query.py # Retrieval and query interface (builds prompts and calls LLM) │ ├── test_query.py # Manual testing of the query interface │ └── test_harness.py # Grid experiment driver (systematic parameter testing) ├── requirements.txt # Python dependencies └── README.md # This file
-
+```
+DS4300SP25-Prac02/
+├── data/                   # Raw course notes (PDFs)
+├── embedding_results/      # JSON files with generated embeddings
+├── experiment_logs/        # CSV logs from grid experiments
+├── llm_outputs/            # Full LLM responses from grid experiments
+├── src/
+│   ├── chunking.py         # Token-based text chunking
+│   ├── embedding.py        # Embedding pipeline & model loader
+│   ├── indexing.py         # Indexing embeddings into Redis, Chroma, FAISS
+│   ├── load_dbs.py         # Driver script: runs the embedding and indexing pipelines
+│   ├── preprocessing.py    # PDF extraction, cleaning, and chunking
+│   ├── query.py            # Retrieval and query interface (builds prompts and calls LLM)
+│   ├── test_query.py       # Manual testing of the query interface
+│   └── test_harness.py     # Grid experiment driver (systematic parameter testing)
+├── requirements.txt        # Python dependencies
+└── README.md               # This file
+```
 ---
 
 ## Requirements 
@@ -38,10 +54,6 @@ A sample `requirements.txt` is provided. Install dependencies with:
 pip install -r requirements.txt 
 ```
 
----
-
-## How to Run the System
-
 **Docker for Redis**
 
 If you do not already have Redis with RediSearch installed locally, you can run it using Docker. 
@@ -53,25 +65,40 @@ docker run --name redis-stack -p 6379:6379 -d redis/redis-stack:latest
 
 ---
 
+## How to Run the System
+
 ### Embedding and Indexing 
 
 Manually load the databases, generate embeddings from the preprocessed text, and load them into a vector database. 
 
 **Default Usage**
 
-To run with default parameters (200-token chunks with 50-token overlap, using all-MminiLM-L6-v2 with Redis):
+- chunk_size = 200
+- overlap = 50
+- model = all-MiniLM-L6-v2
+- vector_db = Redis 
 
     python src/load_dbs.py
+
 
 **Custom Parameters**
 
 To make specifications about chunk size, chunk overlap, embedding model, and database used:
 
-    python src/load_dbs.py --chunk_size [###] --overlap [##] --model ["all-MiniLM-L6-v2", "all-mpnet-base-v2", or "intfloat/e5-base-v2"] --vector_db ["faiss", "chroma", or "redis"]
+    python src/load_dbs.py \
+    --chunk_size [###] \
+    --overlap [##] \
+    --model ["all-MiniLM-L6-v2", "all-mpnet-base-v2", or "intfloat/e5-base-v2"] \
+    --vector_db ["faiss", "chroma", or "redis"]
+
 
 Example:
 
-    python src/load_dbs.py --chunk_size 500 --overlap 50 --model "all-MiniLM-L6-v2" --vector_db "redis"
+    python src/load_dbs.py \
+    --chunk_size 500 \
+    --overlap 50 \
+    --model "all-MiniLM-L6-v2" \
+    --vector_db "redis"
 
 ---
 
@@ -83,21 +110,26 @@ Test the retrieval and LLM response with a manual query using test_query.py:
 
 **Default Usage**
 
-question: "What are ACID properties?
+- question: "What are ACID properties?
+- llm_model: mistral 
+- system prompt: "You are a helpful assistant. Use the provided course material to answer the question."
 
-llm_model: mistral 
-
-system prompt: "You are a helpful assistant. Use the provided course material to answer the question."
 
 **Custom Parameters**
 
 To make specifications about the question, model and system prompt:
 
-    python src/test_query.py --question ["lorem ipsum"] --llm_model ["lorem ipsum"] -- system prompt ["lorem ipsum"]
+    python src/test_query.py \
+    --question "lorem ipsum" \
+    --llm_model "lorem ipsum" \
+    --system_prompt "lorem ipsum"
 
 Example: 
 
-    python src/test_query.py --question ["What is the CAP principle?"] --llm_model ["mistral"] -- system prompt ["You are a database tutor. Answer the queries with information only from the course slides."]
+    python src/test_query.py \
+    --question "What is the CAP principle?" \
+    --llm_model "mistral" \
+    --system_prompt "You are a database tutor. Answer the queries with information only from the course slides."
 
 ---
 
