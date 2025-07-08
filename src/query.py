@@ -29,7 +29,7 @@ def query_vector_db(
 ):
     # Embed the question
     model = get_model(embed_model)
-    query_vec = get_embedding(question, model, embed_model)
+    query_vec = get_embedding(question, model)
 
     # faiss retrieval
     if vector_db == "faiss":

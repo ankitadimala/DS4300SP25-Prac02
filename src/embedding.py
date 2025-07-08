@@ -12,7 +12,7 @@ def get_model(model_name):
         model_cache[model_name] = SentenceTransformer(model_name)
     return model_cache[model_name]
 
-def get_embedding(text, model, model_name):
+def get_embedding(text, model):
     return model.encode(text, show_progress_bar=False).tolist()
 
 # embedding pipeline
@@ -40,7 +40,7 @@ def run_embedding_pipeline(selected_models, selected_chunk_sizes, selected_overl
                 print(f"Embedding with {model_name} | chunk={chunk_size}, overlap={overlap}")
                 output = []
                 for key, text in raw_data.items():
-                    embedding = get_embedding(text, model, model_name)
+                    embedding = get_embedding(text, model)
                     output.append({"text": text, "embedding": embedding, "module": key, "slide_number": 1})
 
                 with open(output_file, "w", encoding="utf-8") as f:
